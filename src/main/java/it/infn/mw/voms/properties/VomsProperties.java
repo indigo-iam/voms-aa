@@ -1,0 +1,170 @@
+package it.infn.mw.voms.properties;
+
+import java.util.concurrent.TimeUnit;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ConfigurationProperties("voms")
+public class VomsProperties {
+
+  public static class TLSProperties {
+    @NotBlank
+    String certificatePath;
+
+    @NotBlank
+    String privateKeyPath;
+
+    @NotBlank
+    String trustAnchorsDir;
+
+    @Positive
+    long trustAnchorsRefreshIntervalSecs = 86400;
+
+    public String getCertificatePath() {
+      return certificatePath;
+    }
+
+    public void setCertificatePath(String certificatePath) {
+      this.certificatePath = certificatePath;
+    }
+
+    public String getPrivateKeyPath() {
+      return privateKeyPath;
+    }
+
+    public void setPrivateKeyPath(String privateKeyPath) {
+      this.privateKeyPath = privateKeyPath;
+    }
+
+    public String getTrustAnchorsDir() {
+      return trustAnchorsDir;
+    }
+
+    public void setTrustAnchorsDir(String trustAnchorsDir) {
+      this.trustAnchorsDir = trustAnchorsDir;
+    }
+
+    public long getTrustAnchorsRefreshIntervalSecs() {
+      return trustAnchorsRefreshIntervalSecs;
+    }
+
+    public void setTrustAnchorsRefreshIntervalSecs(long trustAnchorsRefreshIntervalSecs) {
+      this.trustAnchorsRefreshIntervalSecs = trustAnchorsRefreshIntervalSecs;
+    }
+  }
+
+  @Valid
+  public static class VOMSTrustStoreProperties {
+
+    @NotBlank
+    String dir;
+
+    long refreshIntervalSec = TimeUnit.HOURS.toSeconds(24);
+
+    public String getDir() {
+      return dir;
+    }
+
+    public void setDir(String dir) {
+      this.dir = dir;
+    }
+
+    public long getRefreshIntervalSec() {
+      return refreshIntervalSec;
+    }
+
+    public void setRefreshIntervalSec(long refreshIntervalSec) {
+      this.refreshIntervalSec = refreshIntervalSec;
+    }
+  }
+
+  @Valid
+  public static class VOMSAAProperties {
+
+    @NotBlank
+    private String voName;
+
+    @NotBlank
+    private String host;
+
+    private int port = 15000;
+
+    private long maxAcLifetimeInSeconds = TimeUnit.HOURS.toSeconds(12);
+
+    private boolean useLegacyFqanEncoding = false;
+
+    public String getVoName() {
+      return voName;
+    }
+
+    public void setVoName(String voName) {
+      this.voName = voName;
+    }
+
+    public String getHost() {
+      return host;
+    }
+
+    public void setHost(String host) {
+      this.host = host;
+    }
+
+    public int getPort() {
+      return port;
+    }
+
+    public void setPort(int port) {
+      this.port = port;
+    }
+
+    public long getMaxAcLifetimeInSeconds() {
+      return maxAcLifetimeInSeconds;
+    }
+
+    public void setMaxAcLifetimeInSeconds(long maxAcLifetimeInSeconds) {
+      this.maxAcLifetimeInSeconds = maxAcLifetimeInSeconds;
+    }
+
+    public boolean isUseLegacyFqanEncoding() {
+      return useLegacyFqanEncoding;
+    }
+
+    public void setUseLegacyFqanEncoding(boolean useLegacyFqanEncoding) {
+      this.useLegacyFqanEncoding = useLegacyFqanEncoding;
+    }
+  }
+
+  private TLSProperties tls;
+  private VOMSTrustStoreProperties trust;
+  private VOMSAAProperties aa;
+
+  public TLSProperties getTls() {
+    return tls;
+  }
+
+  public void setTls(TLSProperties tls) {
+    this.tls = tls;
+  }
+
+  public VOMSTrustStoreProperties getTrust() {
+    return trust;
+  }
+
+  public void setTrust(VOMSTrustStoreProperties trust) {
+    this.trust = trust;
+  }
+
+  public VOMSAAProperties getAa() {
+    return aa;
+  }
+
+  public void setAa(VOMSAAProperties aa) {
+    this.aa = aa;
+  }
+}
