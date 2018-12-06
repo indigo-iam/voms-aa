@@ -2,6 +2,7 @@ package it.infn.mw.voms.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -18,10 +19,18 @@ import it.infn.mw.iam.authn.x509.voms.VOMSAccessDeniedHandler;
 import it.infn.mw.iam.authn.x509.voms.VOMSAuthenticationEntryPoint;
 import it.infn.mw.voms.aa.ac.VOMSResponseBuilder;
 
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
 
+
+public class SecurityConfig {
+  
+  private SecurityConfig() {
+    // prevent instantiation
+  }
+  
+  
+  @Configuration
+  @EnableWebSecurity
+  @EnableGlobalMethodSecurity(prePostEnabled = true, proxyTargetClass = true)
   public static class VomsConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -34,7 +43,8 @@ public class SecurityConfig {
     private VOMSResponseBuilder responseBuilder;
     
     public AuthenticationSuccessHandler successHandler() {
-      return (req, res, auth) -> {};
+      return (req, res, auth) -> {
+      };
     }
 
     public IamX509PreauthenticationProcessingFilter iamX509Filter() {

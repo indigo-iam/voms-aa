@@ -1,0 +1,12 @@
+spring: 
+  flyway:
+    locations:
+    - classpath:db/migration/h2
+    - classpath:db/migration/test
+
+voms:
+  tls:
+    certificate-path: src/test/resources/certs/voms_example.cert.pem
+    private-key-path: src/test/resources/certs/voms_example.key.pem
+    trust-anchors-dir: src/test/resources/trust-anchors
+    trust-anchors-refresh-interval-secs: 0

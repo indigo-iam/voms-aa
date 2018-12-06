@@ -13,20 +13,20 @@ import it.infn.mw.voms.aa.VOMSErrorMessage;
 import it.infn.mw.voms.aa.ac.VOMSResponseBuilder;
 
 
-public class VOMSAuthenticationEntryPoint implements AuthenticationEntryPoint{
+public class VOMSAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-  
+
   final VOMSResponseBuilder responseBuilder;
-  
+
   public VOMSAuthenticationEntryPoint(VOMSResponseBuilder responseBuilder) {
     this.responseBuilder = responseBuilder;
   }
-  
+
   @Override
   public void commence(HttpServletRequest request, HttpServletResponse response,
       AuthenticationException authException) throws IOException, ServletException {
     
-    VOMSErrorMessage error = VOMSErrorMessage.unauthenticatedClient();
+    final VOMSErrorMessage error = VOMSErrorMessage.unauthenticatedClient();
     String vomsResponse = responseBuilder.createErrorResponse(error);
     response.setStatus(error.getError().getHttpStatus());
     response.getOutputStream().write(vomsResponse.getBytes());

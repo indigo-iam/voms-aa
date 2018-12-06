@@ -1,0 +1,4 @@
+{
+    "editor.renderWhitespace": "boundary",
+    "java.format.settings.url": "~/git/codestyle/eclipse-google-java-codestyle-formatter.xml"
+}

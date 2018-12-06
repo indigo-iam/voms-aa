@@ -1,0 +1,30 @@
+{
+    "run": {
+        "default": "",
+        "items": [
+            {
+                "name": "voms-ng",
+                "projectName": "voms-ng",
+                "workingDirectory": "/Users/cecco/git/voms-ng",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    },
+    "debug": {
+        "default": "",
+        "items": [
+            {
+                "name": "voms-ng",
+                "projectName": "voms-ng",
+                "workingDirectory": "/Users/cecco/git/voms-ng",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    }
+}

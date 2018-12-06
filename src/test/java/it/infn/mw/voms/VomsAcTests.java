@@ -1,0 +1,215 @@
+package it.infn.mw.voms;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.ByteArrayInputStream;
+import java.util.Date;
+
+import org.italiangrid.voms.VOMSAttribute;
+import org.italiangrid.voms.request.VOMSResponse;
+import org.italiangrid.voms.request.impl.RESTVOMSResponseParsingStrategy;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Transactional;
+
+import it.infn.mw.iam.persistence.model.IamAccount;
+import it.infn.mw.iam.persistence.model.IamGroup;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@ActiveProfiles("h2")
+@AutoConfigureMockMvc(printOnlyOnFailure = false)
+@Transactional
+public class VomsAcTests extends TestSupport {
+
+  RESTVOMSResponseParsingStrategy parser = new RESTVOMSResponseParsingStrategy();
+
+  @Test
+  public void unregisteredUserGetsNoSuchUserError() throws Exception {
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+      .andExpect(status().isForbidden())
+      .andReturn()
+      .getResponse()
+      .getContentAsByteArray();
+
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(true));
+    assertThat(response.errorMessages()[0].getMessage(), containsString("User unknown to this VO"));
+  }
+
+  @Test
+  public void registeredUserNotInVomsGroupDoesNotGetAnAC() throws Exception {
+
+    setupTestUser();
+
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsByteArray();
+
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+
+    assertThat(response.hasErrors(), is(true));
+    assertThat(response.errorMessages()[0].getMessage(), containsString("User unknown to this VO"));
+  }
+  
+  @Test
+  public void supendedUserDoesNotGetsAnAc() throws Exception {
+  
+    IamAccount testAccount = setupTestUser();
+    testAccount.setActive(false);
+    accountRepo.save(testAccount);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+    .andExpect(status().isOk())
+    .andReturn()
+    .getResponse()
+    .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(true));
+    
+    assertThat(response.errorMessages()[0].getMessage(), containsString("is not active"));
+    
+  }
+  
+  @Test
+  public void userInGroupGetsAC() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    
+    addAccountToGroup(testAccount, rootGroup);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(false));
+    VOMSAttribute attrs = getAttributeCertificate(response);
+    assertThat(attrs.getFQANs(), hasItem("/test"));
+    assertThat(attrs.getNotAfter(), lessThanOrEqualTo(Date.from(NOW_PLUS_12_HOURS)));
+  }
+  
+  
+  @Test
+  public void allGroupsAreReturnedForUser() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    IamGroup roleGroup = createRoleGroup(rootGroup, "VO-Admin");
+    IamGroup subGroup = createChildGroup(rootGroup, "sub");
+    IamGroup subSubGroup = createChildGroup(subGroup, "subsub");
+    
+    addAccountToGroup(testAccount, rootGroup);
+    addAccountToGroup(testAccount, roleGroup);
+    addAccountToGroup(testAccount, subGroup);
+    addAccountToGroup(testAccount, subSubGroup);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(false));
+    VOMSAttribute attrs = getAttributeCertificate(response);
+    assertThat(attrs.getFQANs(), hasSize(3));
+    assertThat(attrs.getFQANs(), hasItem("/test"));
+    assertThat(attrs.getFQANs(), hasItem("/test/sub"));
+    assertThat(attrs.getFQANs(), hasItem("/test/sub/subsub"));
+    assertThat(attrs.getNotAfter(), lessThanOrEqualTo(Date.from(NOW_PLUS_12_HOURS)));
+  }
+  
+  
+  @Test
+  public void requestedFqanOrderEnforced() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    IamGroup roleGroup = createRoleGroup(rootGroup, "VO-Admin");
+    IamGroup subGroup = createChildGroup(rootGroup, "sub");
+    IamGroup subSubGroup = createChildGroup(subGroup, "subsub");
+    
+    addAccountToGroup(testAccount, rootGroup);
+    addAccountToGroup(testAccount, roleGroup);
+    addAccountToGroup(testAccount, subGroup);
+    addAccountToGroup(testAccount, subSubGroup);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()).param("fqans", "/test/sub,/test/sub/subsub"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(false));
+    VOMSAttribute attrs = getAttributeCertificate(response);
+    assertThat(attrs.getFQANs(), hasSize(3));
+    assertThat(attrs.getFQANs(), contains("/test/sub", "/test/sub/subsub", "/test")); 
+    assertThat(attrs.getNotAfter(), lessThanOrEqualTo(Date.from(NOW_PLUS_12_HOURS)));
+  }
+  
+  @Test
+  public void roleRequestWorks() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    IamGroup roleGroup = createRoleGroup(rootGroup, "VO-Admin");
+    IamGroup subGroup = createChildGroup(rootGroup, "sub");
+    IamGroup subSubGroup = createChildGroup(subGroup, "subsub");
+    
+    addAccountToGroup(testAccount, rootGroup);
+    addAccountToGroup(testAccount, roleGroup);
+    addAccountToGroup(testAccount, subGroup);
+    addAccountToGroup(testAccount, subSubGroup);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()).param("fqans", "/test/Role=VO-Admin"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(false));
+    VOMSAttribute attrs = getAttributeCertificate(response);
+    assertThat(attrs.getFQANs(), hasSize(4));
+    assertThat(attrs.getFQANs(), contains("/test/Role=VO-Admin", "/test", "/test/sub", "/test/sub/subsub")); 
+    assertThat(attrs.getNotAfter(), lessThanOrEqualTo(Date.from(NOW_PLUS_12_HOURS)));
+    
+  }
+  
+  @Test
+  public void roleRequestForUnassignedRoleIsHandledCorrectly() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    IamGroup roleGroup = createRoleGroup(rootGroup, "VO-Admin");
+    
+    addAccountToGroup(testAccount, rootGroup);
+    addAccountToGroup(testAccount, roleGroup);
+    
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()).param("fqans", "/test/Role=production"))
+        .andExpect(status().isOk())
+        .andReturn()
+        .getResponse()
+        .getContentAsByteArray();
+    
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+    assertThat(response.hasErrors(), is(true));
+    assertThat(response.errorMessages()[0].getMessage(), containsString("User is not authorized to request attribute")); 
+  }
+  
+}

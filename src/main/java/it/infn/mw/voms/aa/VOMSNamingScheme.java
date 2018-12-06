@@ -26,32 +26,29 @@ public class VOMSNamingScheme {
 
   public static final Logger LOG = LoggerFactory.getLogger(VOMSNamingScheme.class);
 
-  public static final String containerSyntax =
+  public static final String CONTAINER_SYNTAX =
       "^(/[\\w.-]+)+|((/[\\w.-]+)+/)?(Role=[\\w.-]+)|(Capability=[\\w\\s.-]+)$";
 
-  public static final String groupSyntax = "^(/[\\w.-]+)+$";
+  public static final String GROUP_SYNTAX = "^(/[\\w.-]+)+$";
 
-  public static final String roleSyntax = "^Role=[\\w.-]+$";
+  public static final String ROLE_SYNTAX = "^Role=[\\w.-]+$";
 
-  public static final String qualifiedRoleSyntax = "^(/[\\w.-]+)+/Role=[\\w.-]+$";
+  public static final String QUALIFIED_ROLE_SYNTAX = "^(/[\\w.-]+)+/Role=[\\w.-]+$";
 
-  public static final String capabilitySyntax = "^Capability=[\\w\\s.-]+$";
+  public static final String CAPABILITY_SYNTAX = "^Capability=[\\w\\s.-]+$";
 
-  public static final Pattern containerPattern = Pattern.compile(containerSyntax);
+  public static final Pattern CONTAINER_PATTERN = Pattern.compile(CONTAINER_SYNTAX);
 
-  public static final Pattern groupPattern = Pattern.compile(groupSyntax);
+  public static final Pattern GROUP_PATTERN = Pattern.compile(GROUP_SYNTAX);
 
-  public static final Pattern rolePattern = Pattern.compile(roleSyntax);
+  public static final Pattern ROLE_PATTERN = Pattern.compile(ROLE_SYNTAX);
 
-  public static final Pattern qualifiedRolePattern = Pattern.compile(qualifiedRoleSyntax);
+  public static final Pattern QUALIFIED_ROLE_PATTERN = Pattern.compile(QUALIFIED_ROLE_SYNTAX);
 
-  public static final Pattern capabilityPattern = Pattern.compile(capabilitySyntax);
+  public static final Pattern CAPABILITY_PATTERN = Pattern.compile(CAPABILITY_SYNTAX);
 
-  private final String voName;
-
-  private VOMSNamingScheme(String voName) {
-    this.voName = voName;
-
+  private VOMSNamingScheme() {
+    // prevent instantiation
   }
 
   public static void basicFqanChecks(String fqan) {
@@ -63,7 +60,7 @@ public class VOMSNamingScheme {
     if (fqan.length() > 255)
       throw new VOMSNamingException("fqan.length() > 255");
 
-    if (!containerPattern.matcher(fqan).matches())
+    if (!CONTAINER_PATTERN.matcher(fqan).matches())
       throw new VOMSNamingException("Syntax error in container name: " + fqan);
   }
 
@@ -71,7 +68,7 @@ public class VOMSNamingScheme {
 
     basicFqanChecks(groupName);
 
-    if (!groupPattern.matcher(groupName).matches()) {
+    if (!GROUP_PATTERN.matcher(groupName).matches()) {
       throw new VOMSNamingException("Syntax error in group name: " + groupName);
     }
   }
@@ -86,7 +83,7 @@ public class VOMSNamingScheme {
       throw new VOMSNamingException("roleName.length()>255");
     }
 
-    if (!rolePattern.matcher(roleName).matches()) {
+    if (!ROLE_PATTERN.matcher(roleName).matches()) {
       throw new VOMSNamingException("Syntax error in role name: " + roleName);
     }
   }
@@ -106,7 +103,7 @@ public class VOMSNamingScheme {
     basicFqanChecks(groupName);
 
     String[] tmp = groupName.split("/");
-    String[] groupChain = (String[]) ArrayUtils.subarray(tmp, 1, tmp.length);
+    String[] groupChain = ArrayUtils.subarray(tmp, 1, tmp.length);
 
     if (groupChain.length == 1) {
       return new String[] {groupName};
@@ -128,32 +125,30 @@ public class VOMSNamingScheme {
   public static boolean isGroup(String groupName) {
 
     basicFqanChecks(groupName);
-    return groupPattern.matcher(groupName).matches();
+    return GROUP_PATTERN.matcher(groupName).matches();
 
   }
 
-  public boolean isValidGroupFQAN(String fqan) {
-
+  public static boolean isValidGroupForVo(String voName, String fqan) {
     basicFqanChecks(fqan);
 
     if (!fqan.startsWith(voName)) {
-      LOG.error("FQAN does not start with to name: {}", voName);
       return false;
     }
 
-    return groupPattern.matcher(fqan).matches();
+    return GROUP_PATTERN.matcher(fqan).matches();
   }
 
   public static boolean isRole(String fqan) {
 
     basicFqanChecks(fqan);
-    return rolePattern.matcher(fqan).matches();
+    return ROLE_PATTERN.matcher(fqan).matches();
   }
 
   public static boolean isQualifiedRole(String fqan) {
 
     basicFqanChecks(fqan);
-    return qualifiedRolePattern.matcher(fqan).matches();
+    return QUALIFIED_ROLE_PATTERN.matcher(fqan).matches();
   }
 
   public static Optional<String> getRoleName(String fqan) {
@@ -162,11 +157,11 @@ public class VOMSNamingScheme {
       return Optional.empty();
     }
 
-    Matcher m = containerPattern.matcher(fqan);
+    Matcher m = CONTAINER_PATTERN.matcher(fqan);
 
     if (m.matches()) {
       String roleGroup = m.group(4);
-      return Optional.of(roleGroup.substring(roleGroup.indexOf("=") + 1, roleGroup.length()));
+      return Optional.of(roleGroup.substring(roleGroup.indexOf('=') + 1, roleGroup.length()));
     }
 
     return Optional.empty();
@@ -180,21 +175,18 @@ public class VOMSNamingScheme {
     if (!isRole(fqan) && !isQualifiedRole(fqan))
       return Optional.of(fqan);
 
-    Matcher m = containerPattern.matcher(fqan);
+    Matcher m = CONTAINER_PATTERN.matcher(fqan);
 
     if (m.matches()) {
       String groupName = m.group(2);
 
       if (groupName.endsWith("/")) {
-        Optional.of(groupName.substring(0, groupName.length() - 1));
-      } else
+        return Optional.of(groupName.substring(0, groupName.length() - 1));
+      } else {
         return Optional.of(groupName);
+      }
     }
 
     return Optional.empty();
-  }
-
-  public static VOMSNamingScheme forVO(String voName) {
-    return new VOMSNamingScheme(voName);
   }
 }

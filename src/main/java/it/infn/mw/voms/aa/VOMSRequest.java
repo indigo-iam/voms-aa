@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.italiangrid.voms.VOMSAttribute;
 
+import it.infn.mw.voms.api.VOMSFqan;
+
 public interface VOMSRequest {
 
   public String getRequesterSubject();
@@ -42,9 +44,9 @@ public interface VOMSRequest {
 
   public void setHolderCert(X509Certificate holderCert);
 
-  public List<String> getRequestedFQANs();
+  public List<VOMSFqan> getRequestedFQANs();
 
-  public void setRequestedFQANs(List<String> fqans);
+  public void setRequestedFQANs(List<VOMSFqan> fqans);
 
   public List<VOMSAttribute> getRequestAttributes();
 

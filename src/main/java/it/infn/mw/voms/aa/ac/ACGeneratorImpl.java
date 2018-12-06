@@ -16,12 +16,15 @@ package it.infn.mw.voms.aa.ac;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
 import org.italiangrid.voms.asn1.VOMSACGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Lists;
 
 import eu.emi.security.authn.x509.impl.PEMCredential;
 import it.infn.mw.voms.aa.VOMSRequestContext;
@@ -67,14 +70,16 @@ public enum ACGeneratorImpl implements ACGenerator {
     if (!configured) {
       throw new IllegalStateException("AC generator is not configured!");
     }
-    
+
     BigInteger serialNo = computeSerialNumber();
 
-    X509AttributeCertificateHolder ac = acGenerator.generateVOMSAttributeCertificate(
-        context.getResponse().getIssuedFQANs(), context.getResponse().getIssuedGAs(),
-        context.getResponse().getTargets(), context.getRequest().getHolderCert(), serialNo,
-        context.getResponse().getNotBefore(), context.getResponse().getNotAfter(),
-        context.getVOName(), context.getHost(), context.getPort());
+    List<String> issuedFqans = Lists.newArrayList(context.getResponse().getIssuedFQANs());
+
+    X509AttributeCertificateHolder ac = acGenerator.generateVOMSAttributeCertificate(issuedFqans,
+        context.getResponse().getIssuedGAs(), context.getResponse().getTargets(),
+        context.getRequest().getHolderCert(), serialNo, context.getResponse().getNotBefore(),
+        context.getResponse().getNotAfter(), context.getVOName(), context.getHost(),
+        context.getPort());
 
     return ac.getEncoded();
   }

@@ -15,7 +15,8 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.1.0.RELEASE</version>
-    <relativePath /> <!-- lookup parent from repository -->
+    <relativePath />
+    <!-- lookup parent from repository -->
   </parent>
 
   <properties>
@@ -24,22 +25,35 @@
     <guava.version>27.0.1-jre</guava.version>
     <voms.version>3.2.0</voms.version>
     <voms-utils.version>0.0.1-SNAPSHOT</voms-utils.version>
-    <iam.version>1.5.0.rc1</iam.version>
+    <iam.version>1.5.0.rc2-SNAPSHOT</iam.version>
     <java.version>1.8</java.version>
+    <eclipselink.version>2.5.1</eclipselink.version>
   </properties>
 
   <dependencies>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
+      <exclusions>
+        <!-- Exclude this to make failure reporting work -->
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
-    
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
@@ -50,16 +64,19 @@
       <artifactId>spring-boot-devtools</artifactId>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-test</artifactId>
@@ -95,12 +112,13 @@
       <version>${iam.version}</version>
     </dependency>
 
+
     <dependency>
       <groupId>it.infn.mw.voms</groupId>
       <artifactId>voms-utils</artifactId>
       <version>${voms-utils.version}</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
@@ -116,11 +134,26 @@
       <artifactId>mysql-connector-java</artifactId>
       <scope>runtime</scope>
     </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-xml</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
-    <plugin>
+      <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <executions>
@@ -136,7 +169,7 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
       </plugin>
-      
+
     </plugins>
   </build>
 

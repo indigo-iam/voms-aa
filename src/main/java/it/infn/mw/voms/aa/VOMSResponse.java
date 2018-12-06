@@ -17,6 +17,7 @@ package it.infn.mw.voms.aa;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.italiangrid.voms.VOMSGenericAttribute;
 
@@ -34,9 +35,9 @@ public interface VOMSResponse {
 
   public List<VOMSErrorMessage> getErrorMessages();
 
-  public List<String> getIssuedFQANs();
+  public Set<String> getIssuedFQANs();
 
-  public void setIssuedFQANs(List<String> issuedFQANs);
+  public void setIssuedFQANs(Set<String> issuedFQANs);
 
   public List<VOMSGenericAttribute> getIssuedGAs();
 

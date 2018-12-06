@@ -62,7 +62,7 @@ public class VOMSErrorMessage {
     m.setMessage(String.format("User unknown to this VO: '%s' (issued by '%s')", userDN, userCA));
     return m;
   }
-
+  
   public static VOMSErrorMessage noSuchAttribute(String fqan) {
 
     VOMSErrorMessage m = new VOMSErrorMessage(VOMSError.NoSuchAttribute);

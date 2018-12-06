@@ -16,8 +16,11 @@ package it.infn.mw.voms.aa.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.italiangrid.voms.VOMSGenericAttribute;
+
+import com.google.common.collect.Sets;
 
 import it.infn.mw.voms.aa.VOMSErrorMessage;
 import it.infn.mw.voms.aa.VOMSResponse;
@@ -27,18 +30,18 @@ public class ResponseImpl implements VOMSResponse {
 
   public ResponseImpl() {
 
-    warnings = new ArrayList<VOMSWarningMessage>();
-    errorMessages = new ArrayList<VOMSErrorMessage>();
-    issuedFQANs = new ArrayList<String>();
-    issuedGAs = new ArrayList<VOMSGenericAttribute>();
-    targets = new ArrayList<String>();
+    warnings = new ArrayList<>();
+    errorMessages = new ArrayList<>();
+    issuedFQANs = Sets.newLinkedHashSet();
+    issuedGAs = new ArrayList<>();
+    targets = new ArrayList<>();
     outcome = Outcome.SUCCESS;
   }
 
   private Outcome outcome;
   private List<VOMSWarningMessage> warnings;
   private List<VOMSErrorMessage> errorMessages;
-  private List<String> issuedFQANs;
+  private Set<String> issuedFQANs;
   private List<VOMSGenericAttribute> issuedGAs;
   private List<String> targets;
   private Date notAfter;
@@ -69,13 +72,13 @@ public class ResponseImpl implements VOMSResponse {
   }
 
   @Override
-  public List<String> getIssuedFQANs() {
+  public Set<String> getIssuedFQANs() {
 
     return issuedFQANs;
   }
 
   @Override
-  public void setIssuedFQANs(List<String> issuedFQANs) {
+  public void setIssuedFQANs(Set<String> issuedFQANs) {
 
     this.issuedFQANs = issuedFQANs;
   }

@@ -19,11 +19,12 @@ import java.util.List;
 import org.italiangrid.voms.VOMSAttribute;
 
 import it.infn.mw.voms.aa.VOMSRequest;
+import it.infn.mw.voms.api.VOMSFqan;
 
 public class RequestImpl implements VOMSRequest {
 
   public RequestImpl() {
-
+    // empty ctor.
   }
 
   private String requesterSubject;
@@ -32,7 +33,7 @@ public class RequestImpl implements VOMSRequest {
   private String holderSubject;
   private String holderIssuer;
 
-  private List<String> requestedFQANs;
+  private List<VOMSFqan> requestedFQANs;
   private List<VOMSAttribute> requestAttributes;
 
   private List<String> targets;
@@ -41,8 +42,7 @@ public class RequestImpl implements VOMSRequest {
   private X509Certificate holderCert;
 
   @Override
-  public List<String> getRequestedFQANs() {
-
+  public List<VOMSFqan> getRequestedFQANs() {
     return requestedFQANs;
   }
 
@@ -59,7 +59,7 @@ public class RequestImpl implements VOMSRequest {
   }
 
   @Override
-  public void setRequestedFQANs(List<String> requestedFQANs) {
+  public void setRequestedFQANs(List<VOMSFqan> requestedFQANs) {
 
     this.requestedFQANs = requestedFQANs;
   }

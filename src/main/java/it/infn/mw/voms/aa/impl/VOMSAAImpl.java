@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static it.infn.mw.voms.aa.VOMSResponse.Outcome.SUCCESS;
 import static it.infn.mw.voms.aa.VOMSWarningMessage.shortenedAttributeValidity;
 
-import java.util.Calendar;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import it.infn.mw.iam.persistence.model.IamAccount;
 import it.infn.mw.voms.aa.AttributeAuthority;
@@ -15,18 +15,21 @@ import it.infn.mw.voms.aa.VOMSErrorMessage;
 import it.infn.mw.voms.aa.VOMSRequest;
 import it.infn.mw.voms.aa.VOMSRequestContext;
 import it.infn.mw.voms.aa.VOMSResponse.Outcome;
+import it.infn.mw.voms.properties.VomsProperties;
 
 public class VOMSAAImpl implements AttributeAuthority {
 
   private final IamVOMSAccountResolver accountResolver;
   private final AttributeResolver attributeResolver;
+  private final VomsProperties vomsProperties;
+  private final Clock clock;
 
-  // FIXME: do not use hardcoded value
-  private final long maxAttrValidityInSecs = TimeUnit.HOURS.toSeconds(12);
-  
-  public VOMSAAImpl(IamVOMSAccountResolver accountResolver, AttributeResolver attributeResolver) {
+  public VOMSAAImpl(IamVOMSAccountResolver accountResolver, AttributeResolver attributeResolver,
+      VomsProperties props, Clock clock) {
     this.accountResolver = accountResolver;
     this.attributeResolver = attributeResolver;
+    this.vomsProperties = props;
+    this.clock = clock;
   }
 
   protected void checkMembershipValidity(VOMSRequestContext context) {
@@ -35,60 +38,58 @@ public class VOMSAAImpl implements AttributeAuthority {
     VOMSRequest r = context.getRequest();
 
     if (!account.isActive()) {
-      failResponse(context, VOMSErrorMessage.suspendedUser(r.getHolderSubject(),
-        r.getHolderIssuer()));
+      failResponse(context,
+          VOMSErrorMessage.suspendedUser(r.getHolderSubject(), r.getHolderIssuer()));
       context.setHandled(true);
       return;
     }
   }
-  
+
   private void handleRequestedValidity(VOMSRequestContext context) {
-  
-    long validity = maxAttrValidityInSecs;
+
+    final long MAX_VALIDITY = vomsProperties.getAa().getMaxAcLifetimeInSeconds();
+
+    long validity = MAX_VALIDITY;
     long requestedValidity = context.getRequest().getRequestedValidity();
 
-    if (requestedValidity > 0 && requestedValidity < maxAttrValidityInSecs) {
+    if (requestedValidity > 0 && requestedValidity < MAX_VALIDITY) {
       validity = requestedValidity;
     }
-    
-    if (requestedValidity > maxAttrValidityInSecs) {
-      context.getResponse().getWarnings().add(
-        shortenedAttributeValidity(context.getVOName()));
+
+    if (requestedValidity > MAX_VALIDITY) {
+      context.getResponse().getWarnings().add(shortenedAttributeValidity(context.getVOName()));
     }
 
-    // FIXME: use TimeProvider
-    Calendar cal = Calendar.getInstance();
-    Date startDate = cal.getTime();
+    Instant now = clock.instant();
 
-    cal.add(Calendar.SECOND, (int) validity);
-
-    Date endDate = cal.getTime();
+    Date startDate = Date.from(now);
+    Date endDate = Date.from(now.plusSeconds(validity));
 
     context.getResponse().setNotAfter(endDate);
     context.getResponse().setNotBefore(startDate);
   }
 
   private void requestSanityChecks(VOMSRequest request) {
-    
+
     checkNotNull(request);
     checkNotNull(request.getRequesterSubject());
     checkNotNull(request.getHolderSubject());
-    
+
   }
 
   private void resolveAccount(VOMSRequestContext context) {
     Optional<IamAccount> account = accountResolver.resolveAccountFromRequest(context);
-    
+
     if (account.isPresent()) {
       context.setIamAccount(account.get());
     } else {
-      
-      VOMSErrorMessage m = VOMSErrorMessage
-          .noSuchUser(context.getRequest().getHolderSubject(), context.getRequest().getHolderIssuer());
 
-        context.getResponse().setOutcome(Outcome.FAILURE);
-        context.getResponse().getErrorMessages().add(m);
-        context.setHandled(true);
+      VOMSErrorMessage m = VOMSErrorMessage.noSuchUser(context.getRequest().getHolderSubject(),
+          context.getRequest().getHolderIssuer());
+
+      context.getResponse().setOutcome(Outcome.FAILURE);
+      context.getResponse().getErrorMessages().add(m);
+      context.setHandled(true);
     }
   }
 
@@ -97,24 +98,24 @@ public class VOMSAAImpl implements AttributeAuthority {
   public boolean getAttributes(VOMSRequestContext context) {
 
     requestSanityChecks(context.getRequest());
-    
+
     if (!context.isHandled()) {
       resolveAccount(context);
     }
-    
+
     if (!context.isHandled()) {
       checkMembershipValidity(context);
     }
-    
-      
+
+
     if (!context.isHandled()) {
       resolveFQANs(context);
     }
-    
+
     if (!context.isHandled()) {
       handleRequestedValidity(context);
     }
-    
+
     context.setHandled(true);
 
     return context.getResponse().getOutcome() == SUCCESS;

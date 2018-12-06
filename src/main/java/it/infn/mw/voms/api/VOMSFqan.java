@@ -1,7 +1,12 @@
 package it.infn.mw.voms.api;
 
+import static java.lang.String.format;
+
+import java.util.function.Supplier;
+
 import javax.annotation.Generated;
 
+import it.infn.mw.voms.aa.VOMSNamingException;
 import it.infn.mw.voms.aa.VOMSNamingScheme;
 
 public class VOMSFqan {
@@ -9,6 +14,10 @@ public class VOMSFqan {
   private final String fqan;
 
   private final boolean roleFqan;
+
+  private Supplier<VOMSNamingException> fqanParseError(String error) {
+    return () -> new VOMSNamingException(error);
+  }
 
   private VOMSFqan(String fqan) {
     roleFqan = VOMSNamingScheme.isRole(fqan);
@@ -52,5 +61,23 @@ public class VOMSFqan {
 
   public static VOMSFqan fromString(String fqan) {
     return new VOMSFqan(fqan);
+  }
+
+  public String asIamGroupName() {
+    String groupName = VOMSNamingScheme.getGroupName(fqan)
+      .orElseThrow(fqanParseError("Error extracting groupname from fqan"));
+
+    if (isRoleFqan()) {
+      String roleName = VOMSNamingScheme.getRoleName(fqan)
+        .orElseThrow(fqanParseError("Error extracting rolename from fqan"));
+      return format("%s/%s", groupName.substring(1), roleName);
+    } else {
+      return groupName.substring(1);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return "VOMSFqan [fqan=" + fqan + ", roleFqan=" + roleFqan + "]";
   }
 }
