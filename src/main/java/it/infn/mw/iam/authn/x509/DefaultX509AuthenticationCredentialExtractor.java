@@ -1,27 +1,31 @@
 /**
  * Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2016-2018
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package it.infn.mw.iam.authn.x509;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.CLIENT_CERT;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.EEC;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.EEC_ISSUER_DN;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.EEC_SUBJECT_DN;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.ISSUER;
+import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SERIAL;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SERVER_NAME;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SUBJECT;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.VERIFY;
+import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.V_END;
+import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.V_START;
 
 import java.util.EnumSet;
 import java.util.Optional;
@@ -70,7 +74,8 @@ public class DefaultX509AuthenticationCredentialExtractor
   private final X509CertificateChainParser certChainParser;
 
   protected static final EnumSet<Headers> HEADERS_REQUIRED =
-      EnumSet.complementOf(EnumSet.of(SERVER_NAME, EEC_SUBJECT_DN, EEC_ISSUER_DN, EEC));
+      EnumSet.of(SERVER_NAME, EEC_SUBJECT_DN, EEC_ISSUER_DN, EEC, SUBJECT, ISSUER,
+          SERIAL, V_START, V_END);
 
   @Autowired
   public DefaultX509AuthenticationCredentialExtractor(X509CertificateChainParser chainParser) {
@@ -84,6 +89,7 @@ public class DefaultX509AuthenticationCredentialExtractor
   private void headerNamesSanityChecks(HttpServletRequest request) {
     for (Headers e : HEADERS_REQUIRED) {
       if (Strings.isNullOrEmpty(request.getHeader(e.header))) {
+        LOG.warn("Required header not found: "+e.header);
         throw new IllegalArgumentException("Required header not found: " + e.header);
       }
     }
@@ -127,49 +133,22 @@ public class DefaultX509AuthenticationCredentialExtractor
   public Optional<IamX509AuthenticationCredential> extractX509Credential(
       HttpServletRequest request) {
 
-    String clientCertHeaderContent = getHeader(request, CLIENT_CERT);
-
-    if (isNullOrEmpty(clientCertHeaderContent)) {
-      LOG.debug("{} null or empty", CLIENT_CERT.header);
-      return Optional.empty();
-    }
-
     headerNamesSanityChecks(request);
 
-    
     IamX509AuthenticationCredential.Builder credBuilder =
         new IamX509AuthenticationCredential.Builder();
 
-    if (hasProxyCertificate(request)) {
-      
-      String eecHeaderContent = getHeader(request, EEC);
-      String pemCertificateString = eecHeaderContent.replace('\t', '\n');
+    String eecHeaderContent = getHeader(request, EEC);
+    String pemCertificateString = eecHeaderContent.replace('\t', '\n');
 
-      X509CertificateChainParsingResult chain =
-          certChainParser.parseChainFromString(pemCertificateString);
+    X509CertificateChainParsingResult chain =
+        certChainParser.parseChainFromString(pemCertificateString);
 
-      // FIXME: populate all the fields we get from NGINX
-      credBuilder.certificateChain(chain.getChain())
-        .certificateChainPemString(chain.getPemString())
-        .subject(getHeader(request, EEC_SUBJECT_DN))
-        .issuer(getHeader(request, EEC_ISSUER_DN))
-        .verificationResult(parseVerifyHeader(request))
-        .isProxy(true);
-
-    } else {
-      
-      String pemCertificateString = clientCertHeaderContent.replace('\t', '\n');
-      X509CertificateChainParsingResult chain =
-          certChainParser.parseChainFromString(pemCertificateString);
-
-      // FIXME: populate all the fields we get from NGINX
-      credBuilder.certificateChain(chain.getChain())
-        .certificateChainPemString(chain.getPemString())
-        .subject(getHeader(request, SUBJECT))
-        .issuer(getHeader(request, ISSUER))
-        .verificationResult(parseVerifyHeader(request));
-    }
-
+    credBuilder.certificateChain(chain.getChain())
+      .certificateChainPemString(chain.getPemString())
+      .subject(getHeader(request, EEC_SUBJECT_DN))
+      .issuer(getHeader(request, EEC_ISSUER_DN))
+      .verificationResult(parseVerifyHeader(request));
 
     final IamX509AuthenticationCredential cred = credBuilder.build();
     LOG.debug("Extracted X.509 credential: {}", cred);

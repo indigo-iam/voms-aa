@@ -5,9 +5,6 @@ volumes:
   trustanchors:
   cabundle:
 
-networks:
-  services:
-  
 services:
   trust:
     image: indigoiam/trustanchors
@@ -32,7 +29,7 @@ services:
       - "3306:3306"
   
   iam-be:
-    image: indigoiam/iam-login-service:v1.5.0.rc1-latest
+    image: indigoiam/iam-login-service:v1.5.0.rc2-SNAPSHOT-latest
     environment: 
       TZ: Europe/Rome
       IAM_JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom -Xdebug -Xrunjdwp:server=y,transport=dt_socket,suspend=n,address=1044 -Dspring.profiles.active=mysql-test
@@ -104,7 +101,7 @@ services:
       IAM_DB_HOST: db
       IAM_DB_USERNAME: iam
       IAM_DB_PASSWORD: pwd
-      VOMS_NG_JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom -Xdebug -Xrunjdwp:server=y,transport=dt_socket,suspend=n,address=1044 -Dlogging.level.root=DEBUG
+      VOMS_NG_JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom -Xdebug -Xrunjdwp:server=y,transport=dt_socket,suspend=n,address=1044
     
     ports:
       - "9444:1044"

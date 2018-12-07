@@ -1,22 +1,31 @@
+/**
+ * Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2016-2018
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.infn.mw.voms.api;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.util.Collections.emptyList;
-
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.google.common.base.Splitter;
 
 import it.infn.mw.iam.authn.x509.IamX509AuthenticationCredential;
 import it.infn.mw.voms.aa.AttributeAuthority;
@@ -29,13 +38,10 @@ import it.infn.mw.voms.properties.VomsProperties;
 
 
 @RestController
-public class VOMSController {
-
-  private final Splitter commaSplitter = Splitter.on(',').omitEmptyStrings().trimResults();
-
+@Transactional
+public class VOMSController extends VOMSControllerSupport {
 
   private final VomsProperties vomsProperties;
-
   private final AttributeAuthority aa;
   private final ACGenerator acGenerator;
   private final VOMSResponseBuilder responseBuilder;
@@ -45,65 +51,48 @@ public class VOMSController {
       VOMSResponseBuilder responseBuilder) {
     this.aa = aa;
     this.vomsProperties = props;
-
     this.acGenerator = acGenerator;
     this.responseBuilder = responseBuilder;
   }
 
-  private List<VOMSFqan> getRequestedFqans(String fqans) {
-    if (isNullOrEmpty(fqans)) {
-      return emptyList();
-    } else {
-      return commaSplitter.splitToList(fqans)
-        .stream()
-        .map(VOMSFqan::fromString)
-        .collect(Collectors.toList());
-    }
-  }
+  protected VOMSRequestContext initVomsRequestContext(IamX509AuthenticationCredential cred,
+      VOMSRequestDTO request) {
+    VOMSRequestContext context = RequestContextFactory.newContext();
 
-  private long getRequestedLifetime(Long lifetime) {
+    context.getRequest().setRequesterSubject(cred.getSubject());
+    context.getRequest().setRequesterIssuer(cred.getIssuer());
+    context.getRequest().setHolderSubject(cred.getSubject());
+    context.getRequest().setHolderIssuer(cred.getIssuer());
+    context.getRequest().setHolderCert(cred.getCertificateChain()[0]);
 
-    if (Objects.isNull(lifetime)) {
-      return -1;
-    }
+    context.setHost(vomsProperties.getAa().getHost());
+    context.setPort(vomsProperties.getAa().getPort());
+    context.setVOName(vomsProperties.getAa().getVoName());
 
-    return lifetime;
-  }
+    context.getRequest().setRequestedFQANs(parseRequestedFqansString(request.getFqans()));
+    context.getRequest().setRequestedValidity(getRequestedLifetime(request.getLifetime()));
+    context.getRequest().setTargets(parseRequestedTargetsString(request.getTargets()));
 
-  private List<String> getRequestedTargets(String targets) {
-    if (isNullOrEmpty(targets)) {
-      return Collections.emptyList();
-    }
-    return commaSplitter.splitToList(targets);
+    return context;
   }
 
   @RequestMapping(value = "/generate-ac", method = RequestMethod.GET,
       produces = "text/xml; charset=utf-8")
   @PreAuthorize("hasRole('USER') and hasRole('X509')")
-  public String generateAC(VOMSRequestDTO request, Authentication authentication)
-      throws IOException {
+  public String generateAC(@Validated VOMSRequestDTO request, Authentication authentication,
+      BindingResult validationResult) throws IOException {
+
+    if (validationResult.hasErrors()) {
+      VOMSErrorMessage em =
+          VOMSErrorMessage.badRequest(validationResult.getAllErrors().get(0).getDefaultMessage());
+      return responseBuilder.createErrorResponse(em);
+    }
 
     IamX509AuthenticationCredential cred =
         (IamX509AuthenticationCredential) authentication.getCredentials();
 
-    VOMSRequestContext context = RequestContextFactory.newContext();
-    context.getRequest().setRequesterSubject(cred.getSubject());
-    context.getRequest().setRequesterIssuer(cred.getIssuer());
-    context.getRequest().setHolderSubject(cred.getSubject());
-    context.getRequest().setHolderIssuer(cred.getIssuer());
+    VOMSRequestContext context = initVomsRequestContext(cred, request);
 
-    context.setHost(vomsProperties.getAa().getHost());
-    context.setPort(vomsProperties.getAa().getPort());
-
-    context.setVOName(vomsProperties.getAa().getVoName());
-
-    // populate request
-    context.getRequest().setHolderCert(cred.getCertificateChain()[0]);
-    context.getRequest().setRequestedFQANs(getRequestedFqans(request.getFqans()));
-    context.getRequest().setRequestedValidity(getRequestedLifetime(request.getLifetime()));
-    context.getRequest().setTargets(getRequestedTargets(request.getTargets()));
-
-    // get VOMS attributes
     if (!aa.getAttributes(context)) {
       VOMSErrorMessage em = context.getResponse().getErrorMessages().get(0);
       return responseBuilder.createErrorResponse(em);
@@ -111,6 +100,5 @@ public class VOMSController {
       byte[] acBytes = acGenerator.generateVOMSAC(context);
       return responseBuilder.createResponse(acBytes, context.getResponse().getWarnings());
     }
-
   }
 }

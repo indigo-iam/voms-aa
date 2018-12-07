@@ -15,19 +15,30 @@
  */
 package it.infn.mw.voms;
 
+import static it.infn.mw.voms.aa.VOMSNamingScheme.isQualifiedRole;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-@ActiveProfiles("h2")
-public class VomsServiceTests {
+@RunWith(MockitoJUnitRunner.class)
+public class NamingSchemeTests {
 
-	@Test
-	public void contextLoads() {
-	}
+  @Test
+  public void namingSchemeTests() {
 
+    String[] roleFqans = {"/test/Role=production", "/test/subgroup/Role=VO-Admin"};
+    
+    String[] groupFqans = {"/test", "/test/subgroup", "/dteam"};
+
+    for (String fqan: roleFqans) {
+      assertThat(isQualifiedRole(fqan), is(true));
+    }
+    
+    for (String fqan: groupFqans) {
+      assertThat(isQualifiedRole(fqan), is(false));
+    }
+  }
 }

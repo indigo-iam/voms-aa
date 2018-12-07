@@ -34,6 +34,6 @@ voms:
     trust-anchors-dir: /etc/grid-security/certificates
     trust-anchors-refresh-interval-secs: 14400
   aa:
-    host: ${server.address}
+    host: iam.local.io
     port: ${server.port}
     vo-name: indigo-dc

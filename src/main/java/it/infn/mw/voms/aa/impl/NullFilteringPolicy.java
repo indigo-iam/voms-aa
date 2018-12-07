@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2006-2016
+ * Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2016-2018
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,8 @@ import it.infn.mw.voms.aa.VOMSRequestContext;
 
 public class NullFilteringPolicy implements FQANFilteringPolicy {
 
-  public NullFilteringPolicy() {
-
-  }
-
   @Override
   public boolean filterIssuedFQANs(VOMSRequestContext context) {
-
     return false;
   }
 

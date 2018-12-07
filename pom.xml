@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2016-2018
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>it.infn.mw.voms</groupId>
-  <artifactId>voms-ng</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <artifactId>voms-aa</artifactId>
+  <version>0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>voms-ng</name>
-  <description>VOMS</description>
+  <name>voms-aa</name>
+  <description>VOMS attribute authority</description>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -24,10 +41,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <guava.version>27.0.1-jre</guava.version>
     <voms.version>3.2.0</voms.version>
-    <voms-utils.version>0.0.1-SNAPSHOT</voms-utils.version>
     <iam.version>1.5.0.rc2-SNAPSHOT</iam.version>
     <java.version>1.8</java.version>
-    <eclipselink.version>2.5.1</eclipselink.version>
+    <license-maven-plugin.version>3.0</license-maven-plugin.version>
   </properties>
 
   <dependencies>
@@ -112,13 +128,6 @@
       <version>${iam.version}</version>
     </dependency>
 
-
-    <dependency>
-      <groupId>it.infn.mw.voms</groupId>
-      <artifactId>voms-utils</artifactId>
-      <version>${voms-utils.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
@@ -170,8 +179,32 @@
         <artifactId>git-commit-id-plugin</artifactId>
       </plugin>
 
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>${license-maven-plugin.version}</version>
+        <configuration>
+          <header>LICENSE</header>
+          <useDefaultExcludes>true</useDefaultExcludes>
+          <excludes>
+            <exclude>compose/**</exclude>
+            <exclude>src/test/resources/**</exclude>
+            <exclude>**/Dockerfile</exclude>
+            <exclude>**/*.csv</exclude>
+            <exclude>LICENSE</exclude>
+            <exclude>.factorypath</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>check-headers</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
-
-
 </project>
