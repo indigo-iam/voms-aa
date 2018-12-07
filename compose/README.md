@@ -1,1 +1,1 @@
-This folder contains a StoRM2 development docker compose file
+This folder contains a development docker compose file for the voms-aa
