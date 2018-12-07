@@ -94,7 +94,7 @@ services:
       - ./assets/nginx-voms/conf.d:/etc/nginx/conf.d:ro
       
   vomsng:
-    image: indigoiam/voms-ng:latest
+    image: indigoiam/voms-aa:latest
     hostname: vomsng
     environment:
       TZ: Europe/Rome
@@ -110,7 +110,7 @@ services:
       - iam-be
 
     volumes:
-      - ./assets/etc/vomsng:/voms-ng/config:ro
+      - ./assets/etc/vomsng:/voms-aa/config:ro
       - ./assets/certs/cert.pem:/etc/grid-security/voms/hostcert.pem:ro
       - ./assets/certs/key.pem:/etc/grid-security/voms/hostkey.pem:ro
       - trustanchors:/etc/grid-security/certificates
