@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright (c) Istituto Nazionale di Fisica Nucleare (INFN). 2016-2018
 #
@@ -14,26 +15,13 @@
 # limitations under the License.
 #
 
-server:
-  address: localhost
-  port: 15000
-  max-http-header-size: 16000
-    
-  
-spring:
-  main:
-    banner-mode: "off" 
-  
-  jpa:
-    open-in-view: false
-  
-voms:
-  tls:
-    certificate-path: /etc/grid-security/voms/hostcert.pem
-    private-key-path: /etc/grid-security/voms/hostkey.pem
-    trust-anchors-dir: /etc/grid-security/certificates
-    trust-anchors-refresh-interval-secs: 14400
-  aa:
-    host: ${server.address}
-    port: ${server.port}
-    vo-name: test
+IMAGE_NAME=indigoiam/voms-aa
+
+IMAGE=${IMAGE:-${IMAGE_NAME}}
+
+if [[ -n ${DOCKER_REGISTRY_HOST} ]]; then
+  docker tag ${IMAGE} ${DOCKER_REGISTRY_HOST}/${IMAGE}
+  docker push ${DOCKER_REGISTRY_HOST}/${IMAGE}
+else
+  docker push ${IMAGE}
+fi
