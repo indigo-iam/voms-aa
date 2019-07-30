@@ -28,6 +28,7 @@ pipeline {
     stage('package'){
       steps {
         sh 'mvn -B package'
+        stash includes: 'docker/**', name: 'docker-image'
         stash includes: 'target/*.jar', name: 'jars'
       }
     }
@@ -41,7 +42,9 @@ pipeline {
               container(name: 'runner', shell: '/busybox/sh') {
                 unstash 'jars'
                 sh '''#!/busybox/sh
-                ls -lR
+                cp target/*.jar docker
+                cd docker
+                kaniko-build.sh
                 '''
               }
             }
