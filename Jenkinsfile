@@ -44,7 +44,7 @@ pipeline {
                 unstash 'jars'
                 sh '''#!/busybox/sh
                 set -ex
-                cp target/*.jar docker
+                cp target/*.jar docker/voms-aa.jar
                 cd docker
                 kaniko-build.sh
                 '''
