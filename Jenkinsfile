@@ -28,7 +28,7 @@ pipeline {
     stage('package'){
       steps {
         sh 'mvn -B package'
-        stash includes: 'docker/**', name: 'docker-image'
+        stash includes: 'docker/**', name: 'docker'
         stash includes: 'target/*.jar', name: 'jars'
       }
     }
@@ -40,8 +40,10 @@ pipeline {
           podTemplate(label: dockerLabel, cloud: 'Kube mwdevel', defaultContainer: 'runner', inheritFrom: 'kaniko-template'){
             node(dockerLabel) {
               container(name: 'runner', shell: '/busybox/sh') {
+                unstash 'docker'
                 unstash 'jars'
                 sh '''#!/busybox/sh
+                set -ex
                 cp target/*.jar docker
                 cd docker
                 kaniko-build.sh
