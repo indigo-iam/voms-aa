@@ -28,6 +28,25 @@ pipeline {
     stage('package'){
       steps {
         sh 'mvn -B package'
+        stash includes: 'target/*.jar', name: 'jars'
+      }
+    }
+
+    stage('docker-images'){
+      steps {
+        script {
+          def dockerLabel = kubeLabel + '-docker'
+          podTemplate(label: dockerLabel, cloud: 'Kube mwdevel', defaultContainer: 'runner', inheritFrom: 'kaniko-template'){
+            node(dockerLabel) {
+              container(name: 'runner', shell: '/busybox/sh') {
+                unstash 'jars'
+                sh '''#!/busybox/sh
+                ls -lR
+                '''
+              }
+            }
+          }
+        }
       }
     }
   }
