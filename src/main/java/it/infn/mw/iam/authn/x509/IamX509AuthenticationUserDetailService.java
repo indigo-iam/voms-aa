@@ -70,7 +70,7 @@ public class IamX509AuthenticationUserDetailService
     Optional<IamAccount> account = accountRepository.findByCertificateSubject(principal);
 
     if (account.isPresent()) {
-      LOG.debug("Found IAM account {} linked to principal '{}'", account, principal);
+      LOG.debug("Found IAM account {} linked to principal '{}'", account.get().getUuid(), principal);
       return buildUserFromIamAccount(account.get());
     } else {
       return buildUnknownUser(token);
