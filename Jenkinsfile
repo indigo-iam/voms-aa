@@ -34,22 +34,24 @@ pipeline {
     }
 
     stage('docker-images'){
+      agent {
+        node {
+          label "kaniko"
+          customWorkspace "/workspace/jenkins/agent"
+        }
+      }
+
       steps {
         script {
-          def dockerLabel = kubeLabel + '-docker'
-          podTemplate(label: dockerLabel, cloud: 'Kube mwdevel', defaultContainer: 'runner', inheritFrom: 'kaniko-template'){
-            node(dockerLabel) {
-              container(name: 'runner', shell: '/busybox/sh') {
-                unstash 'docker'
-                unstash 'jars'
-                sh '''#!/busybox/sh
-                set -ex
-                cp target/*.jar docker/voms-aa.jar
-                cd docker
-                kaniko-build.sh
-                '''
-              }
-            }
+          container(name: 'runner', shell: '/busybox/sh') {
+            unstash 'docker'
+            unstash 'jars'
+            sh '''#!/busybox/sh
+            set -ex
+            cp target/*.jar docker/voms-aa.jar
+            cd docker
+            kaniko-build.sh
+            '''
           }
         }
       }
