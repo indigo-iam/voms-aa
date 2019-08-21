@@ -31,20 +31,27 @@ pipeline {
       }
 
       steps {
-        sh 'mvn -B package'
+        sh 'mvn -B -DskipTests package'
         stash includes: 'target/*.jar', name: 'jars'
       }
     }
 
     stage('docker-images'){
       agent {
-          label "docker"
+          node {
+            label "kaniko"
+            customWorkspace "/workspace/jenkins/agent"
+          }
       }
 
       steps {
         script {
             unstash 'jars'
-            sh 'cp target/*.jar docker/voms-aa.jar && cd docker && build-docker-image.sh && push-docker-image.sh'
+            sh '''#!/busybox/sh
+            cp target/*.jar docker/voms-aa.jar
+            cd docker
+            kaniko-build.sh
+            '''
         }
       }
     }
