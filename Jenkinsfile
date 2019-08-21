@@ -39,7 +39,6 @@ pipeline {
     stage('docker-images'){
       agent {
           label "docker"
-        }
       }
 
       steps {
@@ -64,4 +63,5 @@ pipeline {
         }
       }
     }
+
 }
