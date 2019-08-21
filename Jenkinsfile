@@ -45,7 +45,7 @@ pipeline {
       steps {
         script {
             unstash 'jars'
-            sh 'ls -lR'
+            sh 'cp target/*.jar docker/voms-aa.jar && cd docker && build-docker-image.sh'
         }
       }
     }
