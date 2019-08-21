@@ -4,14 +4,8 @@
 def kubeLabel = getKubeLabel()
 
 pipeline {
-  agent {
-      kubernetes {
-          label "${kubeLabel}"
-          cloud 'Kube mwdevel'
-          defaultContainer 'runner'
-          inheritFrom 'ci-template'
-      }
-  }
+  agent any
+
 
   options {
     timeout(time: 1, unit: 'HOURS')
@@ -26,33 +20,32 @@ pipeline {
 
   stages {
     stage('package'){
+
+      agent {
+          kubernetes {
+              label "${kubeLabel}"
+              cloud 'Kube mwdevel'
+              defaultContainer 'runner'
+              inheritFrom 'ci-template'
+          }
+      }
+
       steps {
         sh 'mvn -B package'
-        stash includes: 'docker/**', name: 'docker'
         stash includes: 'target/*.jar', name: 'jars'
       }
     }
 
     stage('docker-images'){
       agent {
-        node {
-          label "kaniko"
-          customWorkspace "/workspace/jenkins/agent"
+          label "docker"
         }
       }
 
       steps {
         script {
-          container(name: 'runner', shell: '/busybox/sh') {
-            unstash 'docker'
             unstash 'jars'
-            sh '''#!/busybox/sh
-            set -ex
-            cp target/*.jar docker/voms-aa.jar
-            cd docker
-            kaniko-build.sh
-            '''
-          }
+            sh 'ls -lR'
         }
       }
     }
