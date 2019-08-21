@@ -46,12 +46,14 @@ pipeline {
 
       steps {
         script {
+          container(name: 'runner', shell: '/busybox/sh') {
             unstash 'jars'
             sh '''#!/busybox/sh
             cp target/*.jar docker/voms-aa.jar
             cd docker
             kaniko-build.sh
             '''
+          }
         }
       }
     }
