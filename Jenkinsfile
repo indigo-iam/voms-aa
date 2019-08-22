@@ -6,7 +6,6 @@ def kubeLabel = getKubeLabel()
 pipeline {
   agent any
 
-
   options {
     timeout(time: 1, unit: 'HOURS')
     buildDiscarder(logRotator(numToKeepStr: '5'))
@@ -31,29 +30,20 @@ pipeline {
       }
 
       steps {
-        sh 'mvn -B -DskipTests package'
+        sh 'mvn -B package'
         stash includes: 'target/*.jar', name: 'jars'
       }
     }
 
     stage('docker-images'){
       agent {
-          node {
-            label "kaniko"
-            customWorkspace "/workspace/jenkins/agent"
-          }
+          label "docker"
       }
 
       steps {
         script {
-          container(name: 'runner', shell: '/busybox/sh') {
             unstash 'jars'
-            sh '''#!/busybox/sh
-            cp target/*.jar docker/voms-aa.jar
-            cd docker
-            kaniko-build.sh
-            '''
-          }
+            sh 'cp target/*.jar docker/voms-aa.jar && cd docker && build-docker-image.sh && push-docker-image.sh'
         }
       }
     }
