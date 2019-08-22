@@ -4,11 +4,20 @@
 def kubeLabel = getKubeLabel()
 
 pipeline {
-  agent any
+  agent {
+      kubernetes {
+          label "${kubeLabel}"
+          cloud 'Kube mwdevel'
+          defaultContainer 'runner'
+          inheritFrom 'ci-template'
+      }
+  }
 
   options {
-    timeout(time: 1, unit: 'HOURS')
+    ansiColor('xterm')
     buildDiscarder(logRotator(numToKeepStr: '5'))
+    timeout(time: 1, unit: 'HOURS')
+    timestamps()
   }
 
   triggers { cron('@daily') }
@@ -19,32 +28,16 @@ pipeline {
 
   stages {
     stage('package'){
-
-      agent {
-          kubernetes {
-              label "${kubeLabel}"
-              cloud 'Kube mwdevel'
-              defaultContainer 'runner'
-              inheritFrom 'ci-template'
-          }
-      }
-
       steps {
         sh 'mvn -B package'
-        stash includes: 'target/*.jar', name: 'jars'
+        sh 'mv target/*.jar docker/voms-aa.jar'
+        archiveArtifacts 'docker/**'
       }
     }
 
     stage('docker-images'){
-      agent {
-          label "docker"
-      }
-
       steps {
-        script {
-            unstash 'jars'
-            sh 'cp target/*.jar docker/voms-aa.jar && cd docker && build-docker-image.sh && push-docker-image.sh'
-        }
+        build job: 'kaniko-build-image/master', parameters: [string(name: 'UPSTREAM_PROJECT_NAME', value: "${currentBuild.fullProjectName}")]
       }
     }
   }
