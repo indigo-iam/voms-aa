@@ -82,8 +82,8 @@ public class VomsConfig {
   }
 
   @Bean
-  AttributeResolver iamAttributeResolver() {
-    return new IamVOMSAttributeResolver();
+  AttributeResolver iamAttributeResolver(VomsProperties properties) {
+    return new IamVOMSAttributeResolver(properties);
   }
 
   @Bean

@@ -37,3 +37,4 @@ voms:
     host: ${server.address}
     port: ${server.port}
     vo-name: test
+    optional-group-label: voms.role

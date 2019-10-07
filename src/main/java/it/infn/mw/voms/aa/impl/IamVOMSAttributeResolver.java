@@ -25,11 +25,16 @@ import it.infn.mw.voms.aa.VOMSErrorMessage;
 import it.infn.mw.voms.aa.VOMSRequestContext;
 import it.infn.mw.voms.aa.VOMSResponse.Outcome;
 import it.infn.mw.voms.api.VOMSFqan;
+import it.infn.mw.voms.properties.VomsProperties;
 
 public class IamVOMSAttributeResolver implements AttributeResolver {
   public static final Logger LOG = LoggerFactory.getLogger(IamVOMSAttributeResolver.class);
 
-  public static final IamLabel VOMS_ROLE_LABEL = IamLabel.builder().name("voms.role").build();
+  private final IamLabel VOMS_ROLE_LABEL;
+
+  public IamVOMSAttributeResolver(VomsProperties properties) {
+    VOMS_ROLE_LABEL = IamLabel.builder().name(properties.getAa().getOptionalGroupLabel()).build();
+  }
 
   protected boolean iamGroupIsVomsGroup(VOMSRequestContext context, IamGroup g) {
     final String voName = context.getVOName();
