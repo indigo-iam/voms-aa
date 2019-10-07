@@ -26,6 +26,7 @@ import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtra
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.VERIFY;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.V_END;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.V_START;
+import static java.lang.String.format;
 
 import java.util.EnumSet;
 import java.util.Optional;
@@ -36,8 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.google.common.base.Strings;
 
 @Component
 public class DefaultX509AuthenticationCredentialExtractor
@@ -73,9 +72,8 @@ public class DefaultX509AuthenticationCredentialExtractor
 
   private final X509CertificateChainParser certChainParser;
 
-  protected static final EnumSet<Headers> HEADERS_REQUIRED =
-      EnumSet.of(SERVER_NAME, EEC_SUBJECT_DN, EEC_ISSUER_DN, EEC, SUBJECT, ISSUER,
-          SERIAL, V_START, V_END);
+  protected static final EnumSet<Headers> HEADERS_REQUIRED = EnumSet.of(SERVER_NAME, EEC_SUBJECT_DN,
+      EEC_ISSUER_DN, EEC, SUBJECT, ISSUER, SERIAL, V_START, V_END);
 
   @Autowired
   public DefaultX509AuthenticationCredentialExtractor(X509CertificateChainParser chainParser) {
@@ -88,9 +86,8 @@ public class DefaultX509AuthenticationCredentialExtractor
 
   private void headerNamesSanityChecks(HttpServletRequest request) {
     for (Headers e : HEADERS_REQUIRED) {
-      if (Strings.isNullOrEmpty(request.getHeader(e.header))) {
-        LOG.warn("Required header not found: "+e.header);
-        throw new IllegalArgumentException("Required header not found: " + e.header);
+      if (isNullOrEmpty(request.getHeader(e.header))) {
+        throw new IllegalArgumentException(format("Required header not found: %s", e.header));
       }
     }
   }
