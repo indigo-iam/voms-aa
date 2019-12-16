@@ -31,9 +31,11 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
   public static final Logger LOG = LoggerFactory.getLogger(IamVOMSAttributeResolver.class);
 
   private final IamLabel VOMS_ROLE_LABEL;
+  private final FQANEncoding fqanEncoding;
 
-  public IamVOMSAttributeResolver(VomsProperties properties) {
+  public IamVOMSAttributeResolver(VomsProperties properties, FQANEncoding fqanEncoding) {
     VOMS_ROLE_LABEL = IamLabel.builder().name(properties.getAa().getOptionalGroupLabel()).build();
+    this.fqanEncoding = fqanEncoding;
   }
 
   protected boolean iamGroupIsVomsGroup(VOMSRequestContext context, IamGroup g) {
@@ -78,7 +80,7 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
   protected void issueRequestedFqan(VOMSRequestContext context, VOMSFqan fqan) {
     if (context.getIamAccount().getGroups().stream().anyMatch(g -> groupMatchesFqan(g, fqan))) {
       LOG.debug("Issuing fqan: {}", fqan.getFqan());
-      context.getResponse().getIssuedFQANs().add(fqan.getFqan());
+      context.getResponse().getIssuedFQANs().add(fqanEncoding.encodeFQAN(fqan.getFqan()));
     } else {
       noSuchAttributeError(context, fqan);
     }
@@ -87,7 +89,7 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
 
   protected void issueCompulsoryGroupFqan(VOMSRequestContext context, IamGroup g) {
     final String fqan = "/" + g.getName();
-    if (context.getResponse().getIssuedFQANs().add(fqan)) {
+    if (context.getResponse().getIssuedFQANs().add(fqanEncoding.encodeFQAN(fqan))) {
       LOG.debug("Issued compulsory fqan: {}", fqan);
     }
   }

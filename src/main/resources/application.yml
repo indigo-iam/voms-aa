@@ -38,3 +38,4 @@ voms:
     port: ${server.port}
     vo-name: test
     optional-group-label: voms.role
+    use-legacy-fqan-encoding: false

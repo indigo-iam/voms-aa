@@ -36,8 +36,11 @@ import it.infn.mw.voms.aa.ac.VOMSResponseBuilder;
 import it.infn.mw.voms.aa.ac.VOMSResponseBuilderImpl;
 import it.infn.mw.voms.aa.impl.AttributeResolver;
 import it.infn.mw.voms.aa.impl.DefaultIamVomsAccountResolver;
+import it.infn.mw.voms.aa.impl.FQANEncoding;
 import it.infn.mw.voms.aa.impl.IamVOMSAccountResolver;
 import it.infn.mw.voms.aa.impl.IamVOMSAttributeResolver;
+import it.infn.mw.voms.aa.impl.LegacyFQANEncoding;
+import it.infn.mw.voms.aa.impl.NullFQANEncoding;
 import it.infn.mw.voms.aa.impl.VOMSAAImpl;
 import it.infn.mw.voms.properties.VomsProperties;
 
@@ -82,8 +85,8 @@ public class VomsConfig {
   }
 
   @Bean
-  AttributeResolver iamAttributeResolver(VomsProperties properties) {
-    return new IamVOMSAttributeResolver(properties);
+  AttributeResolver iamAttributeResolver(VomsProperties properties, FQANEncoding encoding) {
+    return new IamVOMSAttributeResolver(properties, encoding);
   }
 
   @Bean
@@ -101,5 +104,15 @@ public class VomsConfig {
   @Bean
   Clock clock() {
     return Clock.systemDefaultZone();
+  }
+
+
+  @Bean
+  FQANEncoding fqanEncoding(VomsProperties properties) {
+    if (properties.getAa().getUseLegacyFqanEncoding()) {
+      return new LegacyFQANEncoding();
+    } else {
+      return new NullFQANEncoding();
+    }
   }
 }
