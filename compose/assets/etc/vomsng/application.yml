@@ -12,7 +12,7 @@ spring:
 
   datasource:
     dataSourceClassName: com.mysql.jdbc.jdbc2.optional.MysqlDataSource
-    url: jdbc:mysql://${IAM_DB_HOST:dev.local.io}:${IAM_DB_PORT:3306}/${IAM_DB_NAME:iam}
+    url: jdbc:mysql://${IAM_DB_HOST:dev.local.io}:${IAM_DB_PORT:3306}/${IAM_DB_NAME:iam}?useSSL=false&serverTimezone=UTC
     username: ${IAM_DB_USERNAME:iam}
     password: ${IAM_DB_PASSWORD:pwd}
     max-active: ${IAM_DB_MAX_ACTIVE:100}
