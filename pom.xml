@@ -22,7 +22,7 @@
 
   <groupId>it.infn.mw.voms</groupId>
   <artifactId>voms-aa</artifactId>
-  <version>0.3-SNAPSHOT</version>
+  <version>0.4.0</version>
   <packaging>jar</packaging>
 
   <name>voms-aa</name>
@@ -41,7 +41,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <guava.version>27.0.1-jre</guava.version>
     <voms.version>3.2.0</voms.version>
-    <iam.version>1.6.0-SNAPSHOT</iam.version>
+    <iam.version>1.6.0</iam.version>
     <java.version>1.8</java.version>
     <license-maven-plugin.version>3.0</license-maven-plugin.version>
   </properties>
