@@ -49,6 +49,8 @@ public enum VOMSResponseBuilderImpl implements VOMSResponseBuilder {
 
   private TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
+  Base64 base64Encoder = new Base64(64);
+
   private VOMSResponseBuilderImpl() {
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -105,13 +107,12 @@ public enum VOMSResponseBuilderImpl implements VOMSResponseBuilder {
     return output;
   }
 
-
   public String createResponse(byte[] acBytes, List<VOMSWarningMessage> warnings) {
 
     Document response = docBuilder.newDocument();
     VOMSResponseFragment frag = new VOMSResponseFragment(response);
 
-    frag.buildACElement(Base64.encodeBase64String(acBytes), warnings);
+    frag.buildACElement(base64Encoder.encodeToString(acBytes), warnings);
     response.appendChild(frag.getFragment());
 
     return xmlDocAsString(response);
