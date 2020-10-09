@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,6 +42,8 @@ import it.infn.mw.voms.properties.VomsProperties;
 @Transactional
 public class VOMSController extends VOMSControllerSupport {
 
+  public static final String LEGACY_VOMS_APIS_UA = "voms APIs 2.0";
+
   private final VomsProperties vomsProperties;
   private final AttributeAuthority aa;
   private final ACGenerator acGenerator;
@@ -56,7 +59,7 @@ public class VOMSController extends VOMSControllerSupport {
   }
 
   protected VOMSRequestContext initVomsRequestContext(IamX509AuthenticationCredential cred,
-      VOMSRequestDTO request) {
+      VOMSRequestDTO request, String userAgent) {
     VOMSRequestContext context = RequestContextFactory.newContext();
 
     context.getRequest().setRequesterSubject(cred.getSubject());
@@ -68,6 +71,7 @@ public class VOMSController extends VOMSControllerSupport {
     context.setHost(vomsProperties.getAa().getHost());
     context.setPort(vomsProperties.getAa().getPort());
     context.setVOName(vomsProperties.getAa().getVoName());
+    context.setUserAgent(userAgent);
 
     context.getRequest().setRequestedFQANs(parseRequestedFqansString(request.getFqans()));
     context.getRequest().setRequestedValidity(getRequestedLifetime(request.getLifetime()));
@@ -79,7 +83,9 @@ public class VOMSController extends VOMSControllerSupport {
   @RequestMapping(value = "/generate-ac", method = RequestMethod.GET,
       produces = "text/xml; charset=utf-8")
   @PreAuthorize("hasRole('USER') and hasRole('X509')")
-  public String generateAC(@Validated VOMSRequestDTO request, Authentication authentication,
+  public String generateAC(@Validated VOMSRequestDTO request,
+      @RequestHeader(name = "User-Agent", required = false) String userAgent,
+      Authentication authentication,
       BindingResult validationResult) throws IOException {
 
     if (validationResult.hasErrors()) {
@@ -91,11 +97,18 @@ public class VOMSController extends VOMSControllerSupport {
     IamX509AuthenticationCredential cred =
         (IamX509AuthenticationCredential) authentication.getCredentials();
 
-    VOMSRequestContext context = initVomsRequestContext(cred, request);
+    VOMSRequestContext context = initVomsRequestContext(cred, request, userAgent);
 
     if (!aa.getAttributes(context)) {
+
       VOMSErrorMessage em = context.getResponse().getErrorMessages().get(0);
-      return responseBuilder.createErrorResponse(em);
+
+      if (LEGACY_VOMS_APIS_UA.equals(userAgent)) {
+        return responseBuilder.createLegacyErrorResponse(em);
+      } else {
+        return responseBuilder.createErrorResponse(em);
+      }
+
     } else {
       byte[] acBytes = acGenerator.generateVOMSAC(context);
       return responseBuilder.createResponse(acBytes, context.getResponse().getWarnings());

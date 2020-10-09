@@ -24,7 +24,7 @@ public interface VOMSRequestContext {
   public void setHandled(boolean complete);
 
   public IamAccount getIamAccount();
-  
+
   public void setIamAccount(IamAccount account);
 
   public VOMSRequest getRequest();
@@ -43,4 +43,7 @@ public interface VOMSRequestContext {
 
   public void setPort(int port);
 
+  public String getUserAgent();
+
+  public void setUserAgent(String userAgent);
 }

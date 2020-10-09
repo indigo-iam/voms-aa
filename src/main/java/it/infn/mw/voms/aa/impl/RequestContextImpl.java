@@ -38,6 +38,8 @@ public class RequestContextImpl implements VOMSRequestContext {
   private String voName;
   private int port;
 
+  private String userAgent;
+
   @Override
   public VOMSRequest getRequest() {
 
@@ -97,7 +99,7 @@ public class RequestContextImpl implements VOMSRequestContext {
 
     this.port = port;
   }
-  
+
   @Override
   public IamAccount getIamAccount() {
     return account;
@@ -106,6 +108,16 @@ public class RequestContextImpl implements VOMSRequestContext {
   @Override
   public void setIamAccount(IamAccount account) {
     this.account = account;
+  }
+
+  @Override
+  public String getUserAgent() {
+    return userAgent;
+  }
+
+  @Override
+  public void setUserAgent(String userAgent) {
+    this.userAgent = userAgent;
   }
 
 }
