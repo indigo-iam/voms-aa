@@ -30,14 +30,6 @@ pipeline {
     stage('package'){
       steps {
         sh 'mvn -B package'
-        sh 'mv target/*.jar docker/voms-aa.jar'
-        archiveArtifacts 'docker/**'
-      }
-    }
-
-    stage('docker-images'){
-      steps {
-        build job: 'kaniko-build-image/master', parameters: [string(name: 'UPSTREAM_PROJECT_NAME', value: "${currentBuild.fullProjectName}")]
       }
     }
   }
@@ -55,5 +47,4 @@ pipeline {
         }
       }
     }
-
 }
