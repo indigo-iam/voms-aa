@@ -21,7 +21,6 @@ import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtra
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.EEC_SUBJECT_DN;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.ISSUER;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SERIAL;
-import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SERVER_NAME;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.SUBJECT;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.VERIFY;
 import static it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor.Headers.V_END;
@@ -72,7 +71,8 @@ public class DefaultX509AuthenticationCredentialExtractor
 
   private final X509CertificateChainParser certChainParser;
 
-  protected static final EnumSet<Headers> HEADERS_REQUIRED = EnumSet.of(SERVER_NAME, EEC_SUBJECT_DN,
+  protected static final EnumSet<Headers> HEADERS_REQUIRED =
+      EnumSet.of(EEC_SUBJECT_DN,
       EEC_ISSUER_DN, EEC, SUBJECT, ISSUER, SERIAL, V_START, V_END);
 
   @Autowired
