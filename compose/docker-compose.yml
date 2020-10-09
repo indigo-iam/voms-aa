@@ -112,7 +112,7 @@ services:
       - iam-be
 
     volumes:
-      - ./assets/etc/vomsng:/voms-aa/config:ro
+      - ./assets/etc/vomsng:/config:ro
       - ./assets/certs/cert.pem:/etc/grid-security/voms/hostcert.pem:ro
       - ./assets/certs/key.pem:/etc/grid-security/voms/hostkey.pem:ro
       - trustanchors:/etc/grid-security/certificates
