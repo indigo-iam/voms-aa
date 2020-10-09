@@ -46,4 +46,4 @@ jobs:
       env:
         DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         DH_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      run: mvn -B -Djib.to.auth.username=$DH_USER -Djib.to.auth.password=$DH_PASSWORD -DskipTests install jib:build
+      run: mvn -s maven/cnaf-mirror-settings.xml -B -Djib.to.auth.username=$DH_USER -Djib.to.auth.password=$DH_PASSWORD -DskipTests install jib:build 
