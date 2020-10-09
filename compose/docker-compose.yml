@@ -8,6 +8,8 @@ volumes:
 services:
   trust:
     image: indigoiam/trustanchors
+    environment:
+      - FORCE_TRUST_ANCHORS_UPDATE=1
     volumes:
       - trustanchors:/etc/grid-security/certificates
       - cabundle:/etc/pki
@@ -78,7 +80,7 @@ services:
 
     depends_on:
       - trust
-      - vomsng
+        # - vomsng
 
     environment:
 
