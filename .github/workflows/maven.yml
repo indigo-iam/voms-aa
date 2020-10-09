@@ -18,4 +18,4 @@ jobs:
       with:
         java-version: 11
     - name: Build with Maven
-      run: mvn -B package
+      run: mvn -B package -s maven/cnaf-mirror-settings.xml
