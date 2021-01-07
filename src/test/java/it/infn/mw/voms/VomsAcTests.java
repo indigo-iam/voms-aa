@@ -33,6 +33,7 @@ import org.italiangrid.voms.request.VOMSResponse;
 import org.italiangrid.voms.request.impl.RESTVOMSResponseParsingStrategy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import it.infn.mw.iam.persistence.model.IamAccount;
 import it.infn.mw.iam.persistence.model.IamGroup;
+import it.infn.mw.voms.properties.VomsProperties;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -50,6 +52,9 @@ import it.infn.mw.iam.persistence.model.IamGroup;
 public class VomsAcTests extends TestSupport {
 
   RESTVOMSResponseParsingStrategy parser = new RESTVOMSResponseParsingStrategy();
+
+  @Autowired
+  VomsProperties properties;
 
   @Test
   public void unregisteredUserGetsNoSuchUserError() throws Exception {
@@ -227,4 +232,27 @@ public class VomsAcTests extends TestSupport {
     assertThat(response.errorMessages()[0].getMessage(), containsString("User is not authorized to request attribute")); 
   }
   
+  @Test
+  public void gasAreCorrectlyEncoded() throws Exception {
+    IamAccount testAccount = setupTestUser();
+    IamGroup rootGroup = createVomsRootGroup();
+    addAccountToGroup(testAccount, rootGroup);
+    assignGenericAttribute(testAccount, TEST_ATTRIBUTE);
+
+    byte[] xmlResponse = mvc.perform(get("/generate-ac").headers(test0VOMSHeaders()))
+      .andExpect(status().isOk())
+      .andReturn()
+      .getResponse()
+      .getContentAsByteArray();
+
+    VOMSResponse response = parser.parse(new ByteArrayInputStream(xmlResponse));
+
+    VOMSAttribute attrs = getAttributeCertificate(response);
+    assertThat(attrs.getGenericAttributes(), hasSize(1));
+    assertThat(attrs.getGenericAttributes().get(0).getName(), is("test"));
+    assertThat(attrs.getGenericAttributes().get(0).getValue(), is("test"));
+    assertThat(attrs.getGenericAttributes().get(0).getContext(),
+        is(properties.getAa().getVoName()));
+
+  }
 }

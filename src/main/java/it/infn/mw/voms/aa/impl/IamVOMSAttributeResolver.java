@@ -15,10 +15,14 @@
  */
 package it.infn.mw.voms.aa.impl;
 
+import java.util.Set;
+
+import org.italiangrid.voms.ac.impl.VOMSGenericAttributeImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.infn.mw.iam.persistence.model.IamAccount;
+import it.infn.mw.iam.persistence.model.IamAttribute;
 import it.infn.mw.iam.persistence.model.IamGroup;
 import it.infn.mw.iam.persistence.model.IamLabel;
 import it.infn.mw.voms.aa.VOMSErrorMessage;
@@ -134,6 +138,16 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
   @Override
   public void resolveGAs(VOMSRequestContext requestContext) {
 
+    Set<IamAttribute> attrs = requestContext.getIamAccount().getAttributes();
+    for (IamAttribute a : attrs) {
+      VOMSGenericAttributeImpl attr = new VOMSGenericAttributeImpl();
+      attr.setName(a.getName());
+      attr.setValue(a.getValue());
+      attr.setContext(requestContext.getVOName());
+
+      LOG.debug("Issuing generic attribute: {}", attr);
+      requestContext.getResponse().getIssuedGAs().add(attr);
+    }
   }
 
 }

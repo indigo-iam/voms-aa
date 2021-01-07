@@ -124,6 +124,7 @@ public class VOMSAAImpl implements AttributeAuthority {
 
     if (!context.isHandled()) {
       resolveFQANs(context);
+      resolveGAs(context);
     }
 
     if (!context.isHandled()) {
@@ -138,6 +139,10 @@ public class VOMSAAImpl implements AttributeAuthority {
 
   private void resolveFQANs(VOMSRequestContext context) {
     attributeResolver.resolveFQANs(context);
+  }
+
+  private void resolveGAs(VOMSRequestContext context) {
+    attributeResolver.resolveGAs(context);
   }
 
   protected void failResponse(VOMSRequestContext context, VOMSErrorMessage em) {

@@ -41,6 +41,7 @@ import com.google.common.collect.Lists;
 
 import it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor;
 import it.infn.mw.iam.persistence.model.IamAccount;
+import it.infn.mw.iam.persistence.model.IamAttribute;
 import it.infn.mw.iam.persistence.model.IamGroup;
 import it.infn.mw.iam.persistence.model.IamLabel;
 import it.infn.mw.iam.persistence.model.IamX509Certificate;
@@ -67,10 +68,12 @@ public class TestSupport {
   public static final String EXPECTED_USER_NOT_FOUND = "Expected user not found";
 
   public static final String VO_NAME = "test";
-  
+
   public static final Instant NOW = Instant.parse("2018-01-01T00:00:00.00Z");
   public static final Instant NOW_PLUS_12_HOURS = NOW.plus(Duration.ofHours(12));
-  
+
+  public static final IamAttribute TEST_ATTRIBUTE = IamAttribute.newInstance("test", "test");
+
   @TestConfiguration
   static class TestConf {
     @Bean
@@ -79,7 +82,7 @@ public class TestSupport {
       return Clock.fixed(NOW, ZoneId.systemDefault());
     }
   }
-  
+
   @Autowired
   MockMvc mvc;
 
@@ -94,7 +97,7 @@ public class TestSupport {
 
   @Autowired
   protected VomsProperties props;
-  
+
   public static HttpHeaders test0VOMSHeaders() throws IOException {
 
     String eec = TestUtils.loadClasspathResourceContent(TEST_0_EEC_PATH);
@@ -154,8 +157,8 @@ public class TestSupport {
 
     return VOMSACUtils.deserializeVOMSAttributes(attributeCertificate);
   }
-  
-  
+
+
 
   protected IamAccount setupTestUser() {
     IamAccount testAccount =
@@ -176,7 +179,7 @@ public class TestSupport {
   protected IamGroup createVomsRootGroup() {
     return createGroup(props.getAa().getVoName());
   }
-  
+
   protected IamGroup createGroup(String name) {
 
     Date now = Date.from(clock.instant());
@@ -188,7 +191,7 @@ public class TestSupport {
     groupRepo.save(g);
     return g;
   }
-  
+
   protected IamGroup createChildGroup(IamGroup parent, String name) {
 
     Date now = Date.from(clock.instant());
@@ -203,7 +206,7 @@ public class TestSupport {
     groupRepo.save(parent);
     return g;
   }
-  
+
   protected IamAccount addAccountToGroup(IamAccount a, IamGroup g) {
     a.getGroups().add(g);
     g.getAccounts().add(a);
@@ -211,11 +214,19 @@ public class TestSupport {
     groupRepo.save(g);
     return a;
   }
-  
+
   protected IamGroup createRoleGroup(IamGroup parent, String name) {
     IamGroup g = createChildGroup(parent, name);
     g.getLabels().add(IamLabel.builder().name("voms.role").build());
     groupRepo.save(g);
     return g;
+  }
+
+  protected IamAccount assignGenericAttribute(IamAccount a, IamAttribute attribute) {
+    a.getAttributes().remove(attribute);
+    a.getAttributes().add(attribute);
+    accountRepo.save(a);
+
+    return a;
   }
 }
