@@ -41,11 +41,16 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <guava.version>27.0.1-jre</guava.version>
-    <voms.version>3.3.2</voms.version>
+    
     <iam.version>1.7.0-SNAPSHOT</iam.version>
+    
     <java.version>11</java.version>
+    
     <license-maven-plugin.version>3.0</license-maven-plugin.version>
     <jib-maven-plugin.version>2.6.0</jib-maven-plugin.version>
+    
+    <voms.version>3.3.2</voms.version>
+    <bc.version>1.58</bc.version>
   </properties>
 
   <dependencies>
@@ -126,8 +131,30 @@
       <groupId>org.italiangrid</groupId>
       <artifactId>voms-api-java</artifactId>
       <version>${voms.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcpkix-jdk15on</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.bouncycastle</groupId>
+          <artifactId>bcprov-jdk15on</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-debug-jdk15on</artifactId>
+      <version>${bc.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-debug-jdk15on</artifactId>
+      <version>${bc.version}</version>
+    </dependency>
+    
     <dependency>
       <groupId>it.infn.mw</groupId>
       <artifactId>iam-persistence</artifactId>
@@ -173,6 +200,37 @@
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>${license-maven-plugin.version}</version>
+          <configuration>
+            <header>LICENSE</header>
+            <useDefaultExcludes>true</useDefaultExcludes>
+            <excludes>
+              <exclude>compose/**</exclude>
+              <exclude>src/test/resources/**</exclude>
+              <exclude>**/Dockerfile</exclude>
+              <exclude>**/*.csv</exclude>
+              <exclude>LICENSE</exclude>
+              <exclude>.factorypath</exclude>
+            </excludes>
+          </configuration>
+          <executions>
+            <execution>
+              <id>check-headers</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
@@ -190,7 +248,6 @@
         <groupId>pl.project13.maven</groupId>
         <artifactId>git-commit-id-plugin</artifactId>
       </plugin>
-
 
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
@@ -212,32 +269,6 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>${license-maven-plugin.version}</version>
-        <configuration>
-          <header>LICENSE</header>
-          <useDefaultExcludes>true</useDefaultExcludes>
-          <excludes>
-            <exclude>compose/**</exclude>
-            <exclude>src/test/resources/**</exclude>
-            <exclude>**/Dockerfile</exclude>
-            <exclude>**/*.csv</exclude>
-            <exclude>LICENSE</exclude>
-            <exclude>.factorypath</exclude>
-          </excludes>
-        </configuration>
-        <executions>
-          <execution>
-            <id>check-headers</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 </project>
