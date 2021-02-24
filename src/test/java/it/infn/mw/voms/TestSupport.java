@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -41,6 +42,7 @@ import com.google.common.collect.Lists;
 
 import it.infn.mw.iam.authn.x509.DefaultX509AuthenticationCredentialExtractor;
 import it.infn.mw.iam.persistence.model.IamAccount;
+import it.infn.mw.iam.persistence.model.IamAccountGroupMembership;
 import it.infn.mw.iam.persistence.model.IamAttribute;
 import it.infn.mw.iam.persistence.model.IamGroup;
 import it.infn.mw.iam.persistence.model.IamLabel;
@@ -51,6 +53,8 @@ import it.infn.mw.voms.properties.VomsProperties;
 
 
 public class TestSupport {
+
+  public static final String VOMS_ROLE_LABEL = "voms.role";
 
   public static final String SERVER_NAME = "voms.example";
   public static final String TLS_PROTOCOL = "TLSv1.2";
@@ -208,16 +212,23 @@ public class TestSupport {
   }
 
   protected IamAccount addAccountToGroup(IamAccount a, IamGroup g) {
-    a.getGroups().add(g);
-    g.getAccounts().add(a);
-    accountRepo.save(a);
-    groupRepo.save(g);
+
+    Optional<IamGroup> maybeGroup =
+        groupRepo.findGroupByMemberAccountUuidAndGroupUuid(a.getUuid(), g.getUuid());
+
+    if (!maybeGroup.isPresent()) {
+      a.getGroups().add(IamAccountGroupMembership.forAccountAndGroup(clock.instant(), a, g));
+
+      accountRepo.save(a);
+
+    }
+
     return a;
   }
 
   protected IamGroup createRoleGroup(IamGroup parent, String name) {
     IamGroup g = createChildGroup(parent, name);
-    g.getLabels().add(IamLabel.builder().name("voms.role").build());
+    g.getLabels().add(IamLabel.builder().name(VOMS_ROLE_LABEL).build());
     groupRepo.save(g);
     return g;
   }

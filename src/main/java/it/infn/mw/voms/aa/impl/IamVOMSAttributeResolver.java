@@ -15,6 +15,8 @@
  */
 package it.infn.mw.voms.aa.impl;
 
+import static java.util.Comparator.comparing;
+
 import java.util.Set;
 
 import org.italiangrid.voms.ac.impl.VOMSGenericAttributeImpl;
@@ -22,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.infn.mw.iam.persistence.model.IamAccount;
+import it.infn.mw.iam.persistence.model.IamAccountGroupMembership;
 import it.infn.mw.iam.persistence.model.IamAttribute;
 import it.infn.mw.iam.persistence.model.IamGroup;
 import it.infn.mw.iam.persistence.model.IamLabel;
@@ -82,7 +85,11 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
   }
 
   protected void issueRequestedFqan(VOMSRequestContext context, VOMSFqan fqan) {
-    if (context.getIamAccount().getGroups().stream().anyMatch(g -> groupMatchesFqan(g, fqan))) {
+    if (context.getIamAccount()
+      .getGroups()
+      .stream()
+      .map(IamAccountGroupMembership::getGroup)
+      .anyMatch(g -> groupMatchesFqan(g, fqan))) {
       LOG.debug("Issuing fqan: {}", fqan.getFqan());
       context.getResponse().getIssuedFQANs().add(fqanEncoding.encodeFQAN(fqan.getFqan()));
     } else {
@@ -100,7 +107,7 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
 
   protected boolean requestAccountIsMemberOfGroup(VOMSRequestContext context, String groupName) {
     IamAccount account = context.getIamAccount();
-    return account.getGroups().stream().anyMatch(g -> g.getName().equals(groupName));
+    return account.getGroups().stream().anyMatch(g -> g.getGroup().getName().equals(groupName));
   }
 
   protected void resolveRequestedFQANs(VOMSRequestContext requestContext) {
@@ -114,8 +121,9 @@ public class IamVOMSAttributeResolver implements AttributeResolver {
     requestContext.getIamAccount()
       .getGroups()
       .stream()
-      .filter(g -> iamGroupIsVomsGroup(requestContext, g))
-      .forEach(g -> issueCompulsoryGroupFqan(requestContext, g));
+      .sorted(comparing(gm -> gm.getGroup().getName()))
+      .filter(g -> iamGroupIsVomsGroup(requestContext, g.getGroup()))
+      .forEach(g -> issueCompulsoryGroupFqan(requestContext, g.getGroup()));
 
     if (requestContext.getResponse().getIssuedFQANs().isEmpty()) {
       noSuchUserError(requestContext);
