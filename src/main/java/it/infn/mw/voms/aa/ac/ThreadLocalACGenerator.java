@@ -16,6 +16,7 @@
 package it.infn.mw.voms.aa.ac;
 
 import static it.infn.mw.voms.aa.ac.ACGeneratorUtils.computeRandomSerialNumber;
+import static java.util.Objects.isNull;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -31,29 +32,25 @@ import com.google.common.collect.Lists;
 import eu.emi.security.authn.x509.impl.PEMCredential;
 import it.infn.mw.voms.aa.VOMSRequestContext;
 
-public enum ACGeneratorImpl implements ACGenerator {
+public class ThreadLocalACGenerator implements ACGenerator {
 
-  INSTANCE;
+  public static final Logger LOG = LoggerFactory.getLogger(ThreadLocalACGenerator.class);
 
-  public static final Logger logger = LoggerFactory.getLogger(ACGeneratorImpl.class);
+  private ThreadLocal<VOMSACGenerator> acGenerator;
 
-  private volatile boolean configured = false;
-
-  private VOMSACGenerator acGenerator;
-
-  public synchronized void configure(PEMCredential aaCredential) {
-
-    if (!configured) {
-      acGenerator = new VOMSACGenerator(aaCredential);
-      configured = true;
-    }
-
+  @Override
+  public void configure(PEMCredential aaCredential) {
+    acGenerator = ThreadLocal.withInitial(() -> {
+      return new VOMSACGenerator(aaCredential);
+    });
   }
 
   @Override
   public byte[] generateVOMSAC(VOMSRequestContext context) throws IOException {
 
-    if (!configured) {
+    VOMSACGenerator generator = acGenerator.get();
+
+    if (isNull(generator)) {
       throw new IllegalStateException("AC generator is not configured!");
     }
 
@@ -61,7 +58,7 @@ public enum ACGeneratorImpl implements ACGenerator {
 
     List<String> issuedFqans = Lists.newArrayList(context.getResponse().getIssuedFQANs());
 
-    X509AttributeCertificateHolder ac = acGenerator.generateVOMSAttributeCertificate(issuedFqans,
+    X509AttributeCertificateHolder ac = generator.generateVOMSAttributeCertificate(issuedFqans,
         context.getResponse().getIssuedGAs(), context.getResponse().getTargets(),
         context.getRequest().getHolderCert(), serialNo, context.getResponse().getNotBefore(),
         context.getResponse().getNotAfter(), context.getVOName(), context.getHost(),
@@ -69,4 +66,5 @@ public enum ACGeneratorImpl implements ACGenerator {
 
     return ac.getEncoded();
   }
+
 }

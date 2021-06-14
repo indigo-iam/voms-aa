@@ -31,7 +31,7 @@ import it.infn.mw.iam.authn.x509.InactiveAccountAuthenticationHander;
 import it.infn.mw.iam.persistence.repository.IamAccountRepository;
 import it.infn.mw.voms.aa.AttributeAuthority;
 import it.infn.mw.voms.aa.ac.ACGenerator;
-import it.infn.mw.voms.aa.ac.ACGeneratorImpl;
+import it.infn.mw.voms.aa.ac.ThreadLocalACGenerator;
 import it.infn.mw.voms.aa.ac.VOMSResponseBuilder;
 import it.infn.mw.voms.aa.ac.VOMSResponseBuilderImpl;
 import it.infn.mw.voms.aa.impl.AttributeResolver;
@@ -72,7 +72,7 @@ public class VomsConfig {
   @Bean
   ACGenerator acGenerator(PEMCredential aaCredential) {
 
-    ACGenerator generator = ACGeneratorImpl.INSTANCE;
+    ThreadLocalACGenerator generator = new ThreadLocalACGenerator();
     generator.configure(aaCredential);
     return generator;
 
