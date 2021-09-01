@@ -23,7 +23,7 @@
 
   <groupId>it.infn.mw.voms</groupId>
   <artifactId>voms-aa</artifactId>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <packaging>jar</packaging>
 
   <name>voms-aa</name>
@@ -42,7 +42,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <guava.version>27.0.1-jre</guava.version>
     
-    <iam.version>1.7.0.rc0.240221</iam.version>
+    <iam.version>1.7.0</iam.version>
     
     <java.version>11</java.version>
     
