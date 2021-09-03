@@ -13,7 +13,6 @@ services:
     volumes:
       - trustanchors:/etc/grid-security/certificates
       - cabundle:/etc/pki
-  
   db:
     container_name: db
     image: mysql:5.7
@@ -30,74 +29,34 @@ services:
     ports:
       - "3306:3306"
   
-  iam-be:
-    image: indigoiam/iam-login-service:v1.6.0
-    environment: 
-      TZ: Europe/Rome
-      IAM_JAVA_OPTS: -Djava.security.egd=file:/dev/./urandom -Xdebug -Xrunjdwp:server=y,transport=dt_socket,suspend=n,address=1044 -Dspring.profiles.active=mysql-test
-      IAM_JAR: /code/iam-login-service/target/iam-login-service.war
-      IAM_HOST: iam.local.io
-      IAM_BASE_URL: https://iam.local.io
-      IAM_ISSUER: https://iam.local.io
-      IAM_USE_FORWARDED_HEADERS: "true"
-      IAM_NOTIFICATION_DISABLE: "true"
-      IAM_DB_HOST: db
-      IAM_DB_USERNAME: iam
-      IAM_DB_PASSWORD: pwd
-  
-    depends_on:
-      - db
-    
-  iam:
-    image: indigoiam/nginx:latest
-    container_name: iam
+  ngx:
+    image: indigoiam/openresty-voms:latest
 
     depends_on: 
-      - iam-be
+      - vomsaa
+      - trust
     
     environment:
       TZ: Europe/Rome
-      NGINX_HOST: iam
-      NGINX_PORT: 443
+      X509_VOMS_DIR: /vomsdir
 
     ports:
       - "443:443"
 
     volumes:
-      - ./assets/nginx-iam/conf.d:/etc/nginx/conf.d:ro
+      - cabundle:/igtf
+      - trustanchors:/etc/grid-security/certificates
+      - ./assets/certs:/certs
+      - ./assets/vomsdir:/vomsdir
+      - ./assets/openresty-voms/conf.d:/etc/nginx/conf.d:ro
     
     networks:
       default:
         aliases:
           - iam.local.io
-
-  nginx-voms:
-    image: storm2/ngx-voms:latest
-    hostname: iam
-    dns_search: local.io
-    ports:
-      - "15000:443"
-
-    depends_on:
-      - trust
-        # - vomsng
-
-    environment:
-
-      TZ: UTC
-      X509_VOMS_DIR: /vomsdir
-
-    volumes:
-      - cabundle:/etc/pki
-      - trustanchors:/etc/grid-security/certificates
-      - ./assets/certs:/certs
-      - ./assets/vomsdir:/vomsdir
-      - ./assets/nginx-voms/nginx.conf:/home/build/local/openresty/nginx/conf/nginx.conf:ro
-      - ./assets/nginx-voms/conf.d:/etc/nginx/conf.d:ro
-      
-  vomsng:
+          - voms.local.io
+  vomsaa:
     image: indigoiam/voms-aa:latest
-    hostname: vomsng
     environment:
       TZ: Europe/Rome
       IAM_DB_HOST: db
@@ -109,12 +68,12 @@ services:
       - "9444:1044"
 
     depends_on:
-      - iam-be
+      - db
 
     volumes:
-      - ./assets/etc/vomsng:/config:ro
-      - ./assets/certs/cert.pem:/etc/grid-security/voms/hostcert.pem:ro
-      - ./assets/certs/key.pem:/etc/grid-security/voms/hostkey.pem:ro
+      - ./assets/etc/vomsaa:/config:ro
+      - ./assets/certs/voms_local_io.cert.pem:/etc/grid-security/voms/hostcert.pem:ro
+      - ./assets/certs/voms_local_io.key.pem:/etc/grid-security/voms/hostkey.pem:ro
       - trustanchors:/etc/grid-security/certificates
 
   client:
@@ -123,7 +82,7 @@ services:
       TZ: Europe/Rome
 
     depends_on:
-      - nginx-voms
+      - trust
 
     volumes:
       - cabundle:/etc/pki
